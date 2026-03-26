@@ -20,9 +20,9 @@ COLOR_MAP = {
     "beige": "cream",
 }
 
-NOISE_WORDS = [
+NOISE_WORDS = {
     "cool", "nice", "trendy", "best", "good", "awesome"
-]
+}
 
 
 def normalize_query(parsed: dict):
@@ -32,7 +32,12 @@ def normalize_query(parsed: dict):
         if not value:
             continue
 
-        value = value.lower().strip()
+        # Guard against non-string values
+        if isinstance(value, str):
+            value = value.lower().strip()
+        else:
+            # Coerce to string representation
+            value = str(value).lower().strip()
 
         # remove noise
         if value in NOISE_WORDS:

@@ -4,6 +4,10 @@ from app.services.ai_provider import get_ai_provider_cached
 from app.services.qdrant_service import search
 from app.services.query_normalizer import normalize_query, clean_query
 
+# Reranking boost constants
+EXACT_MATCH_BOOST = 0.1
+PRINT_TAG_BOOST = 0.2
+
 router = APIRouter()
 
 class SearchRequest(BaseModel):
@@ -20,7 +24,7 @@ def search_products(req: SearchRequest):
         cleaned_query = clean_query(req.query)
         parsed = ai.parse_query(cleaned_query)
         parsed = normalize_query(parsed)
-        embedding = ai.get_embedding(req.query)
+        embedding = ai.get_embedding(cleaned_query)
 
         results, mode = smart_search(embedding, parsed)
 
@@ -79,11 +83,11 @@ def rerank(results, parsed):
         # boost exact matches
         for key, value in parsed.items():
             if payload.get(key) == value:
-                score += 0.1
+                score += EXACT_MATCH_BOOST
 
         # special boost for print/tag match
         if parsed.get("print") and parsed["print"] in payload.get("tags", []):
-            score += 0.2
+            score += PRINT_TAG_BOOST
 
         scored.append((score, r))
 

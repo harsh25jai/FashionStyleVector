@@ -34,8 +34,21 @@ def is_compatible(top: Dict[str, Any], bottom: Dict[str, Any]) -> float:
         score += 0.5
 
     # 5. Occasion match
-    top_occ = set(top.get("occasion", []))
-    bottom_occ = set(bottom.get("occasion", []))
+    # Guard against occasion being None or a string
+    top_occasion = top.get("occasion", [])
+    if top_occasion is None:
+        top_occasion = []
+    elif isinstance(top_occasion, str):
+        top_occasion = [top_occasion]
+    top_occ = set(top_occasion)
+
+    bottom_occasion = bottom.get("occasion", [])
+    if bottom_occasion is None:
+        bottom_occasion = []
+    elif isinstance(bottom_occasion, str):
+        bottom_occasion = [bottom_occasion]
+    bottom_occ = set(bottom_occasion)
+
     if top_occ and bottom_occ and top_occ.intersection(bottom_occ):
         score += 1.0
 
@@ -78,8 +91,12 @@ def recommend_outfit(
     # sort descending
     scored_items.sort(key=lambda x: x[0], reverse=True)
 
-    # return top N
-    return [item for _, item in scored_items[:limit]]
+    # return top N with final_score preserved
+    top_items = scored_items[:limit]
+    # Attach final_score to each item for downstream use
+    for final_score, item in top_items:
+        item.final_score = final_score
+    return [item for _, item in top_items]
 
 
 # 📦 Optional: format output (clean API response)
@@ -87,16 +104,23 @@ def format_recommendations(results: List[Any]):
     formatted = []
 
     for r in results:
+        # Use final_score if available (from recommend_outfit reranking), otherwise fall back to vector score
+        score = getattr(r, 'final_score', r.score)
         formatted.append({
             "id": r.id,
-            "score": r.score,
+            "score": score,
             "payload": r.payload
         })
 
     return formatted
 
 from app.services.qdrant_service import search
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 
 def get_candidates(vector, category: str):
-    return search(vector, {"category": category})
+    # Build proper Qdrant Filter instead of plain dict
+    category_filter = Filter(
+        must=[FieldCondition(key="category", match=MatchValue(value=category))]
+    )
+    return search(vector, category_filter)
