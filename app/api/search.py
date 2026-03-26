@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.services.ai_provider import get_ai_provider_cached
 from app.services.qdrant_service import search
+from app.services.query_normalizer import normalize_query, clean_query
 
 router = APIRouter()
 
@@ -16,7 +17,9 @@ def search_products(req: SearchRequest):
     try:
         ai = get_ai_provider_cached()
 
-        parsed = ai.parse_query(req.query)
+        cleaned_query = clean_query(req.query)
+        parsed = ai.parse_query(cleaned_query)
+        parsed = normalize_query(parsed)
         embedding = ai.get_embedding(req.query)
 
         results, mode = smart_search(embedding, parsed)
