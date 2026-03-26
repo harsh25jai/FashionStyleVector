@@ -19,10 +19,18 @@ until curl -fsS http://localhost:8000/docs > /dev/null; do
 done
 
 echo "Seeding data..."
-docker exec -i fashion_api python scripts/seed_data.py
+if ! docker exec -i fashion_api python scripts/seed_data.py; then
+  echo "ERROR: seeding failed, tearing down"
+  docker-compose down || true
+  exit 1
+fi
 
 echo "Running tests..."
-docker exec -i fashion_api python -m pytest
+if ! docker exec -i fashion_api python -m pytest; then
+  echo "ERROR: tests failed, tearing down"
+  docker-compose down || true
+  exit 1
+fi
 
 echo "Shutting down container..."
 docker-compose down
