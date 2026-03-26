@@ -1,5 +1,6 @@
 # app/services/ai_provider.py
 from app.core.config import AI_PROVIDER
+import json
 
 class AIProvider:
     def get_embedding(self, text: str):
@@ -26,23 +27,33 @@ class OpenAIProvider(AIProvider):
 
     def parse_query(self, query: str):
         prompt = f"""
-        Extract structured filters from query.
+        Extract structured filters from the query.
 
         Query: "{query}"
 
-        Return JSON with keys:
-        type, color, pattern, print, category
-        Only include if present.
-        """
+        Return ONLY JSON (no text, no explanation).
 
+        Allowed fields:
+        type, category, color, pattern, print
+
+        Example:
+        {{
+        "type": "t-shirt",
+        "print": "avengers"
+        }}
+        """
         try:
             res = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}]
             )
 
-            return res.choices[0].message.content
+            content = res.choices[0].message.content.strip()
 
+            try:
+                return json.loads(content)
+            except:
+                return {}  # fallback
         except OpenAIError as e:
             raise Exception(f"LLM Error: {str(e)}")
 

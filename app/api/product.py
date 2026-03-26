@@ -30,7 +30,7 @@ def add_product(product: Product):
         raise HTTPException(
             status_code=502,
             detail="embedding service failed"
-        )
+        ) from e
     
     try:
         insert_product(product.id, embedding, product.dict())
@@ -38,6 +38,6 @@ def add_product(product: Product):
         raise HTTPException(
             status_code=503,
             detail="failed to insert product"
-        )
+        ) from e
 
     return {"status": "inserted"}
