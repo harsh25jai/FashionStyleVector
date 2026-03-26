@@ -8,33 +8,51 @@ from app.services.qdrant_service import insert_product
 
 router = APIRouter()
 
-@router.post("/")
-def add_product(product: Product):
-    combined_text = textwrap.dedent(f"""
-    {product.title}
-    {product.product_description}
-    {product.image_description}
-    {' '.join(product.tags)}
-    {product.category}
-    {product.type} {product.color} {product.pattern or ''} {product.print or ''}
-    """).strip()
-    combined_text = re.sub(r'\s+', ' ', combined_text)
-
+@router.post("")
+def add_product(body: dict):
     try:
         ai = get_ai_provider_cached()
-        embedding = ai.get_embedding(combined_text)
-    except Exception as e:
-        raise HTTPException(
-            status_code=502,
-            detail="embedding service failed"
-        ) from e
-    
-    try:
-        insert_product(product.id, embedding, product.model_dump())
-    except Exception as e:
-        raise HTTPException(
-            status_code=503,
-            detail="failed to insert product"
-        ) from e
 
-    return {"status": "inserted"}
+        image_desc = body.get("image_description")
+        product_desc = body.get("product_description", "")
+
+        if not image_desc:
+            raise HTTPException(400, "image_description required")
+
+        # 🔥 AI extraction
+        structured = ai.extract_attributes(image_desc, product_desc)
+
+        if isinstance(structured, str):
+            import json
+            structured = json.loads(structured)
+        
+        if "category" not in structured:
+            raise HTTPException(500, "AI extraction failed")
+        
+        # merge base fields
+        payload = {
+            "id": body.get("id"),
+            "image_url": body.get("image_url"),
+            "image_description": image_desc,
+            "product_description": product_desc,
+            **structured
+        }
+
+        # embedding text
+        combined_text = f"""
+        {payload.get('title')}
+        {payload.get('product_description')}
+        {payload.get('image_description')}
+        {' '.join(payload.get('tags', []))}
+        {payload.get('category')} {payload.get('type')} {payload.get('color')}
+        {payload.get('pattern')} {payload.get('print')}
+        """
+
+        embedding = ai.get_embedding(combined_text)
+
+        insert_product(payload["id"], embedding, payload)
+
+        return {"status": "inserted", "payload": payload}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

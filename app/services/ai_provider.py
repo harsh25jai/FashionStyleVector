@@ -58,6 +58,42 @@ class OpenAIProvider(AIProvider):
         except OpenAIError as e:
             raise Exception(f"LLM Error: {str(e)}") from e
 
+    def extract_attributes(self, image_desc: str, product_desc: str = ""):
+        prompt = f"""
+        Extract structured fashion attributes.
+
+        Image description: "{image_desc}"
+        Product description: "{product_desc}"
+
+        Return ONLY JSON:
+
+        {{
+        "title": "...",
+        "type": "...",
+        "category": "topwear or bottomwear",
+        "color": "...",
+        "pattern": "...",
+        "print": "...",
+        "fit": "...",
+        "material": "...",
+        "occasion": ["..."],
+        "gender": "...",
+        "tags": ["..."],
+        "style_vectors": {{
+            "formality": 0-1,
+            "boldness": 0-1,
+            "sportiness": 0-1
+        }}
+        }}
+        """
+
+        res = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+
+        return res.choices[0].message.content
 
 # 🔹 Factory
 def get_ai_provider():
