@@ -100,8 +100,8 @@ def seed():
         while attempt < max_attempts:
             attempt += 1
             try:
-                # connect timeout 5s, read timeout 120s (for slow backend inference/DB)
-                res = requests.post(BASE_URL, json=item, timeout=(5, 120))
+                # no timeout configured; relies on default connection behavior and retry logic
+                res = requests.post(BASE_URL, json=item)
                 break
             except (requests.ReadTimeout, requests.ConnectionError) as exc:
                 wait = 2 ** attempt
