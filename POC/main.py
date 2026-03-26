@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+from fastapi.testclient import TestClient
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
@@ -260,4 +261,36 @@ async def search(query: str):
         "products": results
     }
 
+client = TestClient(app)
+
+
+def call_search_api(payload: dict):
+    response = client.get("/search", params=payload)
+    print(f"Status: {response.status_code}")
+    print(response.json())
+    print("-" * 80)
+
+
+print("Test client ready.")
+
+
+call_search_api(
+    {"query": "black polo t-shirt"}
+)
+
+call_search_api(
+    {"query": "rust tshirt with motorcycle print"}
+)
+
+call_search_api(
+    {"query": "red tshirt with blue collar"}
+)
+
+call_search_api(
+    {"query": "bottomwear with straight fit and mid-rise waist"}
+)
+
+call_search_api(
+    {"query": "bottomwear for pink tshirt"}
+)
 # Run with: uvicorn main:app --reload --host 0.0.0.0 --port 8000
