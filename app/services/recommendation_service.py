@@ -91,24 +91,25 @@ def recommend_outfit(
     # sort descending
     scored_items.sort(key=lambda x: x[0], reverse=True)
 
-    # return top N with final_score preserved
-    top_items = scored_items[:limit]
-    # Attach final_score to each item for downstream use
-    for final_score, item in top_items:
-        item.final_score = final_score
-    return [item for _, item in top_items]
+    # return top N with final_score preserved as tuples
+    return scored_items[:limit]
 
 
 # 📦 Optional: format output (clean API response)
 def format_recommendations(results: List[Any]):
     formatted = []
 
-    for r in results:
-        # Use final_score if available (from recommend_outfit reranking), otherwise fall back to vector score
-        score = getattr(r, 'final_score', r.score)
+    for item in results:
+        if isinstance(item, tuple) and len(item) == 2:
+            final_score, r = item
+        else:
+            # back-compat for non-tuple usage
+            r = item
+            final_score = getattr(r, 'final_score', r.score)
+
         formatted.append({
             "id": r.id,
-            "score": score,
+            "score": final_score,
             "payload": r.payload
         })
 

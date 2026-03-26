@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List
-from app.services.recommendation_service import recommend_outfit
+from app.services.recommendation_service import recommend_outfit, format_recommendations
 from app.services.recommendation_service import get_candidates
 
 
@@ -18,6 +18,6 @@ def recommend(body: dict):
 
     candidates = get_candidates(vector, "bottomwear")
 
-    results = recommend_outfit(top_item, candidates)
+    scored_results = recommend_outfit(top_item, candidates)
 
-    return results
+    return format_recommendations(scored_results)

@@ -71,6 +71,10 @@ def smart_search(vector, parsed):
 
     # 4. pure vector fallback
     results = search(vector, {})
+
+    if not results:
+        return {"results": []}, "vector_only"
+    
     return results, "vector_only"
 
 def rerank(results, parsed):
@@ -93,4 +97,17 @@ def rerank(results, parsed):
 
     scored.sort(key=lambda x: x[0], reverse=True)
 
-    return [r for _, r in scored]
+    reranked_results = []
+    for boosted_score, item in scored:
+        try:
+            updated_item = item.copy(update={"score": boosted_score})
+        except Exception:
+            # fallback: assign if allowed
+            try:
+                item.score = boosted_score
+            except Exception:
+                pass
+            updated_item = item
+        reranked_results.append(updated_item)
+
+    return reranked_results

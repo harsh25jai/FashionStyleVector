@@ -93,7 +93,38 @@ class OpenAIProvider(AIProvider):
             response_format={"type": "json_object"}
         )
 
-        return res.choices[0].message.content
+        raw_output = res.choices[0].message.content
+
+        if isinstance(raw_output, str):
+            raw_output = raw_output.strip()
+
+        if isinstance(raw_output, str):
+            try:
+                parsed = json.loads(raw_output)
+            except json.JSONDecodeError as err:
+                raise ValueError(f"AI extract_attributes did not return valid JSON: {err}") from err
+        elif isinstance(raw_output, dict):
+            parsed = raw_output
+        else:
+            raise ValueError("AI extract_attributes response type is unsupported")
+
+        expected_keys = [
+            "title", "type", "category", "color", "pattern", "print", "fit", "material",
+            "occasion", "gender", "tags", "style_vectors"
+        ]
+        for key in expected_keys:
+            if key not in parsed:
+                raise ValueError(f"AI extract_attributes missing required key: {key}")
+
+        style_vectors = parsed.get("style_vectors")
+        if not isinstance(style_vectors, dict):
+            raise ValueError("AI extract_attributes.style_vectors must be an object")
+
+        for vec_key in ["formality", "boldness", "sportiness"]:
+            if vec_key not in style_vectors:
+                raise ValueError(f"AI extract_attributes.style_vectors missing required key: {vec_key}")
+
+        return parsed
 
 # 🔹 Factory
 def get_ai_provider():

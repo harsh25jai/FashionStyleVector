@@ -10,14 +10,18 @@ router = APIRouter()
 
 @router.post("")
 def add_product(body: dict):
+    id_value = body.get("id")
+    if not id_value or not str(id_value).strip():
+        raise HTTPException(400, "id required")
+
+    image_desc = body.get("image_description")
+    product_desc = body.get("product_description", "")
+
+    if not image_desc:
+        raise HTTPException(400, "image_description required")
+
     try:
         ai = get_ai_provider_cached()
-
-        image_desc = body.get("image_description")
-        product_desc = body.get("product_description", "")
-
-        if not image_desc:
-            raise HTTPException(400, "image_description required")
 
         # 🔥 AI extraction
         structured = ai.extract_attributes(image_desc, product_desc)
@@ -31,7 +35,7 @@ def add_product(body: dict):
         
         # merge base fields
         payload = {
-            "id": body.get("id"),
+            "id": id_value,
             "image_url": body.get("image_url"),
             "image_description": image_desc,
             "product_description": product_desc,
@@ -54,5 +58,7 @@ def add_product(body: dict):
 
         return {"status": "inserted", "payload": payload}
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
