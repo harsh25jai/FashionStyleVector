@@ -157,11 +157,11 @@ search_prompt = ChatPromptTemplate.from_messages(
             "human",
             """User query: {query}
 
-Available products:
-{products_list}
+            Available products:
+            {products_list}
 
-Return ONLY a JSON array of matching product IDs. If no products match, return an empty array [].
-Example: ["id1", "id2"]""",
+            Return ONLY a JSON array of matching product IDs. If no products match, return an empty array [].
+            Example: ["id1", "id2"]""",
         ),
     ]
 )
@@ -270,6 +270,18 @@ def call_search_api(payload: dict):
     print(response.json())
     print("-" * 80)
 
+def call_product_api(payload: dict):
+    response = client.get("/products", params=payload)
+    print(f"Status: {response.status_code}")
+    print(response.json())
+    print("-" * 80)
+
+def call_health_api():
+    response = client.get("/health")
+    print(f"Status: {response.status_code}")
+    print(response.json())
+    print("-" * 80)
+
 
 print("Test client ready.")
 
@@ -293,4 +305,12 @@ call_search_api(
 call_search_api(
     {"query": "bottomwear for pink tshirt"}
 )
+
+call_search_api(
+    {"query": "recommend shirt for black jeans"}
+)
+
+call_health_api()
+
+call_product_api({})
 # Run with: uvicorn main:app --reload --host 0.0.0.0 --port 8000
