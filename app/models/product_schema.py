@@ -1,5 +1,5 @@
 # app/models/product_schema.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class Product(BaseModel):
@@ -13,7 +13,7 @@ class Product(BaseModel):
     category: str
 
     color: str
-    pattern: Optional[str]
-    print: Optional[str]
+    pattern: Optional[str] = Field(default=None)
+    print: Optional[str] = Field(default=None)
 
     tags: List[str]

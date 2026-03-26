@@ -10,7 +10,7 @@ class AIProvider:
 
 
 # 🔹 OpenAI Implementation
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 from app.core.config import OPENAI_API_KEY
 
 class OpenAIProvider(AIProvider):
@@ -35,12 +35,16 @@ class OpenAIProvider(AIProvider):
         Only include if present.
         """
 
-        res = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}]
-        )
+        try:
+            res = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}]
+            )
 
-        return res.choices[0].message.content
+            return res.choices[0].message.content
+
+        except OpenAIError as e:
+            raise Exception(f"LLM Error: {str(e)}")
 
 
 # 🔹 Factory
