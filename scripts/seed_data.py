@@ -100,15 +100,17 @@ def seed():
         while attempt < max_attempts:
             attempt += 1
             try:
-                res = requests.post(BASE_URL, json=item, timeout=5)
+                # connect timeout 5s, read timeout 120s (for slow backend inference/DB)
+                res = requests.post(BASE_URL, json=item, timeout=(5, 120))
                 break
             except (requests.ReadTimeout, requests.ConnectionError) as exc:
-                print(f"WARNING: attempt {attempt}/{max_attempts} for {item['id']} failed: {exc}")
+                wait = 2 ** attempt
+                print(f"WARNING: attempt {attempt}/{max_attempts} for {item['id']} failed: {exc}; retrying in {wait}s")
                 if attempt >= max_attempts:
                     print(f"ERROR: request failed for {item['id']} after {max_attempts} attempts")
                     raise
                 else:
-                    time.sleep(1)
+                    time.sleep(wait)
             except requests.RequestException as exc:
                 print(f"ERROR: request failed for {item['id']}: {exc}")
                 raise
