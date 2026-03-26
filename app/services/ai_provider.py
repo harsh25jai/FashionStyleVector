@@ -45,17 +45,18 @@ class OpenAIProvider(AIProvider):
         try:
             res = self.client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
             )
 
             content = res.choices[0].message.content.strip()
 
             try:
                 return json.loads(content)
-            except:
+            except json.JSONDecodeError as json_err:
                 return {}  # fallback
         except OpenAIError as e:
-            raise Exception(f"LLM Error: {str(e)}")
+            raise Exception(f"LLM Error: {str(e)}") from e
 
 
 # 🔹 Factory
@@ -65,3 +66,10 @@ def get_ai_provider():
 
     # Future: OllamaProvider
     raise Exception("Unsupported provider")
+
+
+def get_ai_provider_cached():
+    """Lazy initialization of AI provider on first use with caching."""
+    if not hasattr(get_ai_provider_cached, '_instance'):
+        get_ai_provider_cached._instance = get_ai_provider()
+    return get_ai_provider_cached._instance
