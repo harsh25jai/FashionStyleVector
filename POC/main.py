@@ -71,7 +71,7 @@ products = [
     {
         "id": str(uuid.uuid4()),
         "image_url": "WMSH006696_1.jpg",
-        "image_description": "Yellow checked button-down shirt with full sleeves and chest pocket, worn over a white t-shirt with light blue jeans",
+        "image_description": "Yellow checked button-down shirt with full sleeves and chest pocket",
         "product_description": "Wrangler men's checked shirt made from 76% cotton and 24% linen, regular fit, full sleeves, button closure, lightweight and breathable casual wear"
     },
     {
@@ -83,7 +83,7 @@ products = [
     {
         "id": str(uuid.uuid4()),
         "image_url": "WMSH004519_1.webp",
-        "image_description": "Grey and brown checked button-down shirt with full sleeves and chest pocket, worn over a white t-shirt with blue jeans",
+        "image_description": "Grey and brown checked button-down shirt with full sleeves and chest pocket",
         "product_description": "Wrangler men's cotton checked shirt, slim fit, full sleeves, cutaway collar, button closure, casual everyday wear"
     },
     {
@@ -291,11 +291,15 @@ call_search_api(
 )
 
 call_search_api(
+    {"query": "tshirt with motorcycle print"}
+)
+
+call_search_api(
     {"query": "rust tshirt with motorcycle print"}
 )
 
 call_search_api(
-    {"query": "red tshirt with blue collar"}
+    {"query": "half sleeve red and blue polo with wrangler logo"}
 )
 
 call_search_api(
@@ -307,10 +311,10 @@ call_search_api(
 )
 
 call_search_api(
-    {"query": "recommend shirt for black jeans"}
+    {"query": "recommend only shirt for jeans"}
 )
 
-call_health_api()
+# call_health_api()
 
-call_product_api({})
+# call_product_api({})
 # Run with: uvicorn main:app --reload --host 0.0.0.0 --port 8000
